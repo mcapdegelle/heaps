@@ -117,7 +117,8 @@ class TiledLevel extends Sprite
 		if (groups.exists(key))
 			return groups[key];
 		
-		var tb = new h2d.TileGroup(sheets[tileset], this); 
+		var tb = new h2d.TileGroup(sheets[tileset], this);
+		groups[key] = tb;
 		return tb;
 	}
 	
