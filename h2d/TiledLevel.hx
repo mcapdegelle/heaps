@@ -27,14 +27,14 @@ class TiledLevel extends Sprite
 		for (ts in data.tilesets) {
 			if (ts.image != null) {
 				// tileset from a single image
-				var master = loadImage(Path.join([dir, ts.image.source]), true);
+				var master = createTile(Path.join([dir, ts.image.source]), true);
 				sheets  [ts.name] = master;
 				tilesets[ts.name] = master.grid(ts.tilewidth);
 			} else {
 				// tileset from a collection of images
 				var set = [];
 				for (td in ts.tiledata)
-					set[td.id] = loadImage(Path.join([dir, td.image.source]), false);
+					set[td.id] = createTile(Path.join([dir, td.image.source]), false);
 				tilesets[ts.name] = set;
 			}
 		}
