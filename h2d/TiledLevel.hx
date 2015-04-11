@@ -95,8 +95,6 @@ class TiledLevel extends Sprite
 			var texid = spawnT[0].getTexture().id;
 			for (t in spawnT) if (t.getTexture().id != texid) { canGroupImages = false; break; }
 			
-			trace("layer " + l.name + " can group ? " + canGroupImages);
-			
 			for (i in 0...spawnT.length)
 				_spawnTile(index, spawnT[i], spawnX[i], spawnY[i], spawnR[i], canGroupImages);
 			
