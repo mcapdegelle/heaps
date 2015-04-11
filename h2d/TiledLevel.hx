@@ -12,7 +12,7 @@ class TiledLevel extends Sprite
 {
 	public var data (default, null) : TiledMapData;
 	
-	var groups    : Map<String, TileGroup>;
+	var groups    : Map<Int, TileGroup>;
 	var mainTiles : Map<Int, Tile>;
 	var subTiles  : Map<Int, Tile>;
 	
@@ -22,7 +22,7 @@ class TiledLevel extends Sprite
 		super(p);
 		
 		data      = map.toMap();
-		groups    = new Map<String, TileGroup>();
+		groups    = new Map<Int, TileGroup>();
 		mainTiles = new Map<Int, Tile>();
 		subTiles  = new Map<Int, Tile>();
 		
@@ -38,7 +38,10 @@ class TiledLevel extends Sprite
 				var tex = main.getTexture();
 				mainTiles[tex.id] = main;
 				var i = 0;
-				for (t in main.grid(ts.tilewidth + ts.spacing)) subTiles[ts.firstgid + i++] = t;
+				for (t in main.grid(ts.tilewidth + ts.spacing)) {
+					t.dy = -t.height;
+					subTiles[ts.firstgid + i++] = t;
+				}
 			} else { 
 				// the tileset is a collection of images
 				for (td in ts.tiledata) {
@@ -50,7 +53,14 @@ class TiledLevel extends Sprite
 		}
 		
 		// spawn layers
+		var index = 0;
+		
 		for (l in data.layers) {
+			var spawnT = [];
+			var spawnX = [];
+			var spawnY = [];
+			var spawnR = new Array<Float>();
+			
 			if (l.data != null) {
 				// layer of tiles
 				for (y in 0...data.height) {
@@ -58,18 +68,39 @@ class TiledLevel extends Sprite
 						var gid = l.data[x + y * data.width];
 						if (gid <= 0) continue;
 						var tinfo = getTileInfo(gid);
-						var keepTile = spawnTile(l, tinfo, x, y);
-						if (keepTile) _spawnTile(l, tinfo, x * data.tilewidth, y * data.tileheight);
+						if (!spawnTile(l, tinfo, x, y)) continue;
+
+						spawnT.push(subTiles[tinfo.tileset.firstgid + tinfo.data.id]);
+						spawnX.push(data.tilewidth * x);
+						spawnY.push(data.tileheight * (y + 1));
+						spawnR.push(0);
 					}
 				}
 			} else if (l.objects != null) {
 				// layer of objects
 				for (o in l.objects) {
 					var tinfo = getTileInfo(o.gid);
-					var keepTile = spawnObject(l, o, tinfo);
-					if (tinfo != null && keepTile) _spawnTile(l, tinfo, o.x, o.y, o.rotation);
+					if (!spawnObject(l, o, tinfo)) continue;
+					
+					spawnT.push(subTiles[tinfo.tileset.firstgid + tinfo.data.id]);
+					spawnX.push(o.x);
+					spawnY.push(o.y);
+					spawnR.push(o.rotation);
 				}
 			}
+			
+			if (spawnT.length == 0) return;
+			
+			var canGroupImages = true;
+			var texid = spawnT[0].getTexture().id;
+			for (t in spawnT) if (t.getTexture().id != texid) { canGroupImages = false; break; }
+			
+			trace("layer " + l.name + " can group ? " + canGroupImages);
+			
+			for (i in 0...spawnT.length)
+				_spawnTile(index, spawnT[i], spawnX[i], spawnY[i], spawnR[i], canGroupImages);
+			
+			++index;
 		}
 	}
 
@@ -105,22 +136,25 @@ class TiledLevel extends Sprite
 		return null;
 	}
 	
-	function _spawnTile(layer : TiledMapLayer, tinfo : TileInfo, x, y, ?rotation) {
-		var sub = subTiles[tinfo.tileset.firstgid + tinfo.data.id];
-		var tex = sub.getTexture();
-		
-		var groupId = layer.name + tex.id;
+	function _spawnTile(layer : Int, tile : Tile, x : Int, y : Int, rotation : Float, canGroupImages : Bool) {
+		var tex     = tile.getTexture();
+		var groupId = (layer << 16) | tex.id;
 		var group   = groups[groupId];
 		if (group == null) {
 			var main = mainTiles[tex.id];
 			if (main == null) {
+				if (!canGroupImages) {
+					var img = new Bitmap(tile, this);
+					img.x = x; img.y = y; img.rotation = rotation;
+					return;
+				}
 				main = Tile.fromTexture(tex);
 				mainTiles[tex.id] = main;
 			}
 			group = new TileGroup(main, this);
 			groups[groupId] = group;
 		}
-		group.add(x, y, sub);
+		group.add(x, y, tile);
 	}
 	
 	function getTileInfo(gid) : TileInfo {
