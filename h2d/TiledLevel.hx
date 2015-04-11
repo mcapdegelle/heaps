@@ -75,7 +75,7 @@ class TiledLevel extends Sprite
 				// layer of objects
 				for (o in l.objects) {
 					var tinfo = getTileInfo(o.gid);
-					if (!spawnObject(l, o, tinfo)) continue;
+					if (!spawnObject(l, o, tinfo) || o.gid == 0 ) continue;
 					
 					queueT.push(subTiles[tinfo.tileset.firstgid + tinfo.data.id]);
 					queueX.push(o.x);
@@ -107,7 +107,7 @@ class TiledLevel extends Sprite
 	 * This function is called when the level loads a texture to create its tile.
 	 * Override this to change the texture source, or to retrive tiles from an atlas...  
 	 */	
-	public function createTile(tileset : TiledMapTileset, path : String) : h2d.Tile {
+	function createTile(tileset : TiledMapTileset, path : String) : h2d.Tile {
 		return hxd.Res.load(path).toTile();
 	}
 	
@@ -116,14 +116,14 @@ class TiledLevel extends Sprite
 	 * ie. Spawn game entites, add physics ...
 	 * return true to display the tile, or false to discard it
 	 */
-	public function spawnTile(layer : TiledMapLayer, tinfo : TileInfo, x : Int, y : Int) : Bool { return true; }
+	function spawnTile(layer : TiledMapLayer, tinfo : TileInfo, x : Int, y : Int) : Bool { return true; }
 	
 	/*
 	 * Override this to do something on object spawning
 	 * ie. Spawn game entites, add physics ...
 	 * return true to display the object, or false to discard it
 	 */
-	public function spawnObject(layer : TiledMapLayer, obj : TiledMapObject, ?tinfo : TileInfo) : Bool { return true; }
+	function spawnObject(layer : TiledMapLayer, obj : TiledMapObject, ?tinfo : TileInfo) : Bool { return true; }
 	
 	public function getLayer(name) {
 		for (l in data.layers) if (l.name == name) return l;
