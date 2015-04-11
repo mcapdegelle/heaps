@@ -34,49 +34,108 @@ private class TileLayerContent extends h3d.prim.Primitive {
 		add(x, y, color.r, color.g, color.b, color.a, t);
 	}
 
-	public function add( x : Int, y : Int, r : Float, g : Float, b : Float, a : Float, t : Tile ) {
-		var sx = x + t.dx;
-		var sy = y + t.dy;
-		tmp.push(sx);
-		tmp.push(sy);
-		tmp.push(t.u);
-		tmp.push(t.v);
-		tmp.push(r);
-		tmp.push(g);
-		tmp.push(b);
-		tmp.push(a);
-		tmp.push(sx + t.width);
-		tmp.push(sy);
-		tmp.push(t.u2);
-		tmp.push(t.v);
-		tmp.push(r);
-		tmp.push(g);
-		tmp.push(b);
-		tmp.push(a);
-		tmp.push(sx);
-		tmp.push(sy + t.height);
-		tmp.push(t.u);
-		tmp.push(t.v2);
-		tmp.push(r);
-		tmp.push(g);
-		tmp.push(b);
-		tmp.push(a);
-		tmp.push(sx + t.width);
-		tmp.push(sy + t.height);
-		tmp.push(t.u2);
-		tmp.push(t.v2);
-		tmp.push(r);
-		tmp.push(g);
-		tmp.push(b);
-		tmp.push(a);
+	public function add( x : Int, y : Int, r : Float, g : Float, b : Float, a : Float, t : Tile, ?rot : Float ) {
+		
+		if (rot == null || Math.abs(rot) < 1e-10) {
+			var sx = x + t.dx;
+			var sy = y + t.dy;
+			tmp.push(sx);
+			tmp.push(sy);
+			tmp.push(t.u);
+			tmp.push(t.v);
+			tmp.push(r);
+			tmp.push(g);
+			tmp.push(b);
+			tmp.push(a);
+			tmp.push(sx + t.width);
+			tmp.push(sy);
+			tmp.push(t.u2);
+			tmp.push(t.v);
+			tmp.push(r);
+			tmp.push(g);
+			tmp.push(b);
+			tmp.push(a);
+			tmp.push(sx);
+			tmp.push(sy + t.height);
+			tmp.push(t.u);
+			tmp.push(t.v2);
+			tmp.push(r);
+			tmp.push(g);
+			tmp.push(b);
+			tmp.push(a);
+			tmp.push(sx + t.width);
+			tmp.push(sy + t.height);
+			tmp.push(t.u2);
+			tmp.push(t.v2);
+			tmp.push(r);
+			tmp.push(g);
+			tmp.push(b);
+			tmp.push(a);
+			
+			var x = x + t.dx, y = y + t.dy;
+			if( x < xMin ) xMin = x;
+			if( y < yMin ) yMin = y;
+			x += t.width;
+			y += t.height;
+			if( x > xMax ) xMax = x;
+			if( y > yMax ) yMax = y;
+		} else {
+			var ca = Math.cos(rot), sa = Math.sin(rot);
+			inline function rx(px, py) return (px * ca - py * sa) + x;
+			inline function ry(px, py) return (py * ca + px * sa) + y;
+			
+			var px1 = rx(t.dx, t.dy);
+			var py1 = ry(t.dx, t.dy);
+			var px2 = rx(t.dx + t.width, t.dy);
+			var py2 = ry(t.dx + t.width, t.dy);
+			var px3 = rx(t.dx, t.dy + t.height);
+			var py3 = ry(t.dx, t.dy + t.height);
+			var px4 = rx(t.dx + t.width, t.dy + t.height);
+			var py4 = ry(t.dx + t.width, t.dy + t.height);
 
-		var x = x + t.dx, y = y + t.dy;
-		if( x < xMin ) xMin = x;
-		if( y < yMin ) yMin = y;
-		x += t.width;
-		y += t.height;
-		if( x > xMax ) xMax = x;
-		if( y > yMax ) yMax = y;
+			tmp.push(px1);
+			tmp.push(py1);
+			tmp.push(t.u);
+			tmp.push(t.v);
+			tmp.push(r);
+			tmp.push(g);
+			tmp.push(b);
+			tmp.push(a);
+			tmp.push(px2);
+			tmp.push(py2);
+			tmp.push(t.u2);
+			tmp.push(t.v);
+			tmp.push(r);
+			tmp.push(g);
+			tmp.push(b);
+			tmp.push(a);
+			tmp.push(px3);
+			tmp.push(py3);
+			tmp.push(t.u);
+			tmp.push(t.v2);
+			tmp.push(r);
+			tmp.push(g);
+			tmp.push(b);
+			tmp.push(a);
+			tmp.push(px4);
+			tmp.push(py4);
+			tmp.push(t.u2);
+			tmp.push(t.v2);
+			tmp.push(r);
+			tmp.push(g);
+			tmp.push(b);
+			tmp.push(a);
+			
+			var x = Math.min(Math.min(px1, px2), Math.min(px3, px4));
+			var y = Math.min(Math.min(py1, py2), Math.min(py3, py4));
+			if( x < xMin ) xMin = x;
+			if( y < yMin ) yMin = y;
+			
+			var x = Math.max(Math.max(px1, px2), Math.max(px3, px4));
+			var y = Math.max(Math.max(py1, py2), Math.max(py3, py4));
+			if( x > xMax ) xMax = x;
+			if( y > yMax ) yMax = y;
+		}
 	}
 
 	public function addPoint( x : Float, y : Float, color : Int ) {
@@ -354,8 +413,8 @@ class TileGroup extends Drawable {
 		curColor.w = alpha;
 	}
 
-	public inline function add(x, y, t) {
-		content.add(x, y, curColor.x, curColor.y, curColor.z, curColor.w, t);
+	public inline function add(x, y, t, ?r) {
+		content.add(x, y, curColor.x, curColor.y, curColor.z, curColor.w, t, r);
 	}
 
 	public inline function addColor(x, y, r, g, b, a, t) {
