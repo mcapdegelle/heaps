@@ -70,24 +70,28 @@ class TiledMap extends Resource {
 			tilesets.push(parseTileset(ts));
 		
 		var layers = new Array<TiledMapLayer>();
-		for( l in x.nodes.layer )
-			layers.push(parseLayer(l, base));
 		
-		for( l in x.nodes.objectgroup ) {
-			var objs = [];
-			for ( o in l.nodes.object ) objs.push(parseObject(o));
-			
-			if (!l.has.draworder) {
-				// top to down draw order
-				objs.sort(function(a, b) { return a.y - b.y; });
+		for ( l in x.elements ) {
+			switch (l.name) {
+				case "layer" : 
+					layers.push(parseTileLayer(l, base));
+				case "objectgroup" : {
+					var objs = [];
+					for ( o in l.nodes.object ) objs.push(parseObject(o));
+					
+					if (!l.has.draworder) {
+						// top to down draw order
+						objs.sort(function(a, b) { return a.y - b.y; });
+					}
+						
+					layers.push({
+						name    : l.att.name,
+						opacity : 1.,
+						objects : objs,
+						data    : null,
+					});
+				}
 			}
-				
-			layers.push({
-				name    : l.att.name,
-				opacity : 1.,
-				objects : objs,
-				data    : null,
-			});
 		}
 		
 		return {
@@ -143,7 +147,7 @@ class TiledMap extends Resource {
 		};
 	}
 	
-	function parseLayer(l : haxe.xml.Fast, b : haxe.crypto.BaseCode) {
+	function parseTileLayer(l : haxe.xml.Fast, b : haxe.crypto.BaseCode) {
 		var data = StringTools.trim(l.node.data.innerData);
 		while( data.charCodeAt(data.length-1) == "=".code )
 			data = data.substr(0, data.length - 1);
