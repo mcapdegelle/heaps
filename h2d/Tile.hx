@@ -145,7 +145,7 @@ class Tile {
 		Split the tile into a list of tiles of Size x Size pixels.
 	**/
 	public function grid( size : Int, dx = 0, dy = 0 ) {
-		return [for( y in 0...Std.int(height / size) ) for( x in 0...Std.int(width / size) ) sub(x * size, y * size, size, size, dx, dy)];
+		return [for( y in 0...Math.round(height / size) ) for( x in 0...Math.round(width / size) ) sub(x * size, y * size, size, size, dx, dy)];
 	}
 
 	public function toString() {
