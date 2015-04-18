@@ -97,6 +97,7 @@ class TiledLevel extends Sprite
 					mainTiles[tex.id] = main;
 				}
 				group = new TileGroup(main, this);
+				group.filter = true;
 				prevTex = tex.id;
 			}
 			group.add(queueX[i], queueY[i], tile, queueR[i]);

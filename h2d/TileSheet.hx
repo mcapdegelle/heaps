@@ -2,16 +2,23 @@ package h2d;
 
 class TileSheet
 {
-	var main : Tile;
-	var groups : Map<String, Array<Tile>>;
+	public var main : Tile;
+	public var groups : Map<String, Array<Tile>>;
 	
 	public function new(t) {
 		this.main = t;
 		groups = new Map<String, Array<Tile>>();
 	}
 	
-	public inline function getTile(name : String, frame = 0) {
-		return groups.get(name)[frame];
+	public function getTile(name : String, frame = 0) {
+		if (frame != 0)
+			return groups.get(name)[frame];
+		
+		var r = ~/([a-zA-Z]+)[-_]?([0-9]*)/;
+		r.match(name);
+		var nameFrame = r.matched(2);
+		if (nameFrame != "") frame = Std.parseInt(nameFrame);
+		return groups.get(r.matched(1))[frame];
 	}
 	
 	public inline function getGroup(name : String) {
