@@ -3,6 +3,7 @@ package h3d.pass;
 class Normal extends Default {
 
 	var normalMapId : Int;
+	public var reduceSize : Int = 0;
 
 	public function new() {
 		super();
@@ -15,7 +16,7 @@ class Normal extends Default {
 	}
 
 	override function draw( passes ) {
-		var texture = tcache.allocTarget("normalMal", ctx, ctx.engine.width, ctx.engine.height);
+		var texture = tcache.allocTarget("normalMal", ctx, ctx.engine.width >> reduceSize, ctx.engine.height >> reduceSize);
 		ctx.engine.setTarget(texture);
 		ctx.engine.clear(0, 1);
 		passes = super.draw(passes);

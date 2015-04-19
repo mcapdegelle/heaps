@@ -76,4 +76,7 @@ class Loader {
 		return new TiledMap(fs.get(path));
 	}
 
+	function loadGradients( path : String ) {
+		return new hxd.res.Gradients(fs.get(path));
+	}
 }

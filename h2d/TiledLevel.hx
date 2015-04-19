@@ -44,6 +44,7 @@ class TiledLevel extends Sprite
 				// the tileset is a collection of images
 				for (td in ts.tiledata) {
 					var sub = createTile(ts, Path.join([dir, td.image.source]));
+					if (sub == null) continue;
 					sub.dy = -sub.height;
 					subTiles[ts.firstgid + td.id] = sub;
 				}

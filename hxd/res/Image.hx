@@ -8,6 +8,7 @@ class Image extends Resource {
 	public static var ALLOW_NPOT = #if (flash && !flash11_8) false #else true #end;
 	public static var DEFAULT_FILTER : h3d.mat.Data.Filter = Linear;
 
+	var sheet : h2d.TileSheet;
 	var tex : h3d.mat.Texture;
 	var inf : { width : Int, height : Int, isPNG : Bool };
 
@@ -160,6 +161,8 @@ class Image extends Resource {
 	}
 	
 	public function toTileSheet(data : Resource) : h2d.TileSheet {
+		if (sheet != null) return sheet;
+		
 		if (data.entry.extension != "json")
 			throw "invalid data file " + "\"" + data.name + "\" should ba a JSON (Array or Hash) Texture Packer file";
 			
@@ -170,7 +173,7 @@ class Image extends Resource {
 		var ts = new h2d.TileSheet(toTile());
 		var frames = cast(j.frames, Array<Dynamic>);
 		var groups  = new Map<String, Array<{ index : Int, data : Dynamic}>>();
-		var r = ~/([a-zA-Z]+)[-_]?([0-9]*)/;
+		var r = ~/(\w*\/)*([a-zA-Z]+)[-_]?([0-9]*)/;
 		
 		inline function pushFrame(group, index, data) {
 			var g = groups.get(group);
@@ -185,11 +188,11 @@ class Image extends Resource {
 		
 		if (Std.is(frames, Array)) for (f in frames) {
 			r.match(f.filename);
-			pushFrame(r.matched(1), r.matched(2), f);
+			pushFrame(r.matched(2), r.matched(3), f);
 		}
 		else for (f in Reflect.fields(frames)) {
 			r.match(f);
-			pushFrame(r.matched(1), r.matched(2), Reflect.field(frames, f));
+			pushFrame(r.matched(2), r.matched(3), Reflect.field(frames, f));
 		}
 		
 		for (k in groups.keys()) {
@@ -206,7 +209,7 @@ class Image extends Resource {
 					Std.int(t.spriteSourceSize.y - t.sourceSize.h * py));
 			}
 		}
-		return ts;
+		return sheet = ts;
 	}
 
 }

@@ -3,7 +3,7 @@ package hxd.res;
 class Gradients extends Resource {
 	public function toTextureMap(resolution = 256) : Map<String, h3d.mat.Texture> {
 		var map  = new Map<String, h3d.mat.Texture>();
-		var data = new hxd.fmt.grd.Reader(new FileInput(entry)).read();
+		var data = new hxd.fmt.grd.Reader(new haxe.io.BytesInput(entry.getBytes())).read();
 		
 		for (d in data) {
 			var colors = new Array<{value : h3d.Vector, loc : Int}>();
