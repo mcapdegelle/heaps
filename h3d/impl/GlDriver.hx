@@ -75,6 +75,7 @@ class GlDriver extends Driver {
 
 	var bufferWidth : Int;
 	var bufferHeight : Int;
+	var curTarget : h3d.mat.Texture;
 
 	public function new() {
 		#if js
@@ -123,6 +124,11 @@ class GlDriver extends Driver {
 
 	override function getShaderInputNames() {
 		return curShader.attribNames;
+	}
+
+	override function getNativeShaderCode( shader : hxsl.RuntimeShader ) {
+		var glout = new hxsl.GlslOut();
+		return "// vertex:\n" + glout.run(shader.vertex.data) + "// fragment:\n" + glout.run(shader.fragment.data);
 	}
 
 	function compileShader( glout : hxsl.GlslOut, shader : hxsl.RuntimeShader.RuntimeShaderData ) {
@@ -323,14 +329,19 @@ class GlDriver extends Driver {
 	override function clear( ?color : h3d.Vector, ?depth : Float, ?stencil : Int ) {
 		var bits = 0;
 		if( color != null ) {
+			gl.colorMask(true, true, true, true);
+			if( curMatBits >= 0 ) curMatBits |= Pass.colorMask_mask;
 			gl.clearColor(color.r, color.g, color.b, color.a);
 			bits |= GL.COLOR_BUFFER_BIT;
 		}
 		if( depth != null ) {
+			gl.depthMask(true);
+			if( curMatBits >= 0 ) curMatBits |= Pass.depthWrite_mask;
 			gl.clearDepth(depth);
 			bits |= GL.DEPTH_BUFFER_BIT;
 		}
 		if( stencil != null ) {
+			// reset stencyl mask when we allow to change it
 			gl.clearStencil(stencil);
 			bits |= GL.STENCIL_BUFFER_BIT;
 		}
@@ -385,7 +396,7 @@ class GlDriver extends Driver {
 				gl.framebufferRenderbuffer(GL.FRAMEBUFFER, GL.DEPTH_ATTACHMENT, GL.RENDERBUFFER, tt.rb);
 				gl.bindRenderbuffer(GL.RENDERBUFFER, null);
 			}
-			gl.bindFramebuffer(GL.FRAMEBUFFER, null);
+			gl.bindFramebuffer(GL.FRAMEBUFFER, curTarget == null ? null : curTarget.t.fb);
 		}
 		gl.bindTexture(GL.TEXTURE_2D, null);
 		return tt;
@@ -445,7 +456,10 @@ class GlDriver extends Driver {
 		var img = bmp.toNative();
 		gl.bindTexture(GL.TEXTURE_2D, t.t.t);
 		#if hxsdl
-		gl.texImage2D(GL.TEXTURE_2D, mipLevel, GL.RGBA, bmp.width, bmp.height, 0, GL.RGBA, GL.UNSIGNED_BYTE, img.pixels.toData());
+		var pixels = bmp.getPixels();
+		pixels.setFlip(true);
+		gl.texImage2D(GL.TEXTURE_2D, mipLevel, GL.RGBA, bmp.width, bmp.height, 0, GL.RGBA, GL.UNSIGNED_BYTE, pixels.bytes.getData());
+		pixels.dispose();
 		#else
 		gl.texImage2D(GL.TEXTURE_2D, mipLevel, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, img.getImageData(0, 0, bmp.width, bmp.height));
 		#end
@@ -458,6 +472,7 @@ class GlDriver extends Driver {
 		gl.bindTexture(GL.TEXTURE_2D, t.t.t);
 		pixels.convert(RGBA);
 		#if hxsdl
+		pixels.setFlip(true);
 		gl.texImage2D(GL.TEXTURE_2D, mipLevel, GL.RGBA, t.width, t.height, 0, GL.RGBA, GL.UNSIGNED_BYTE, pixels.bytes.getData());
 		#else
 		var pixels = new Uint8Array(pixels.bytes.getData());
@@ -598,6 +613,7 @@ class GlDriver extends Driver {
 	}
 
 	override function setRenderTarget( tex : h3d.mat.Texture ) {
+		curTarget = tex;
 		if( tex == null ) {
 			gl.bindFramebuffer(GL.FRAMEBUFFER, null);
 			gl.viewport(0, 0, bufferWidth, bufferHeight);

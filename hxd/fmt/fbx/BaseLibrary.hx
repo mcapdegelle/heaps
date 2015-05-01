@@ -143,15 +143,28 @@ class BaseLibrary {
 		this.root = root;
 		for( c in root.childs )
 			init(c);
-	}
 
-	public function loadXtra( data : String ) {
-		var xml = Xml.parse(data).firstElement();
-		if( uvAnims == null ) uvAnims = new Map();
-		for( e in new haxe.xml.Fast(xml).elements ) {
-			var obj = StringTools.urlDecode(e.att.name);
-			var frames = [for( f in e.elements ) { var f = f.innerData.split(" ");  { t : Std.parseFloat(f[0]) * 9622116.25, u : Std.parseFloat(f[1]), v : Std.parseFloat(f[2]) }} ];
-			uvAnims.set(obj, frames);
+		// init properties
+		for( m in this.root.getAll("Objects.Model") ) {
+			for( p in m.getAll("Properties70.P") )
+				switch( p.props[0].toString() ) {
+				case "UDP3DSMAX":
+					var userProps = p.props[4].toString().split("&cr;&lf;");
+					for( p in userProps ) {
+						var pl = p.split("=");
+						var pname = StringTools.trim(pl.shift());
+						var pval = StringTools.trim(pl.join("="));
+						switch( pname ) {
+						case "UV" if( pval != "" ):
+							var xml = try Xml.parse(pval) catch( e : Dynamic ) throw "Invalid UV data in " + m.getName();
+							var frames = [for( f in new haxe.xml.Fast(xml.firstElement()).elements ) { var f = f.innerData.split(" ");  { t : Std.parseFloat(f[0]) * 9622116.25, u : Std.parseFloat(f[1]), v : Std.parseFloat(f[2]) }} ];
+							if( uvAnims == null ) uvAnims = new Map();
+							uvAnims.set(m.getName(), frames);
+						default:
+						}
+					}
+				default:
+				}
 		}
 	}
 
@@ -595,6 +608,7 @@ class BaseLibrary {
 				animNode = getChild(a, "AnimationLayer");
 				break;
 			}
+
 		if( animNode == null ) {
 			if( animName != null )
 				throw "Animation not found " + animName;

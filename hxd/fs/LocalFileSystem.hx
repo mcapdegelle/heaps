@@ -21,10 +21,8 @@ private class LocalEntry extends FileEntry {
 		this.name = name;
 		this.relPath = relPath;
 		this.file = file;
-		if( fs.createHMD && (extension == "fbx" || extension == "xtra") )
+		if( fs.createHMD && extension == "fbx" )
 			convertToHMD();
-		else if( fs.createXBX && extension == "fbx" )
-			convertToXBX();
 		if( fs.createMP3 && extension == "wav" )
 			convertToMP3();
 	}
@@ -34,18 +32,10 @@ private class LocalEntry extends FileEntry {
 	function convertToHMD() {
 		function getHMD() {
 			var fbx = null;
-			var content;
-			if( extension == "xtra" ) {
-				fs.createHMD = false;
-				content = fs.get(relPath.substr(0, relPath.length - 4) + "FBX").getBytes();
-				fs.createHMD = true;
-			} else
-				content = getBytes();
+			var content = getBytes();
 			try fbx = hxd.fmt.fbx.Parser.parse(content.toString()) catch( e : Dynamic ) throw Std.string(e) + " in " + relPath;
 			var hmdout = new hxd.fmt.fbx.HMDOut();
 			hmdout.load(fbx);
-			if( extension == "xtra" )
-				hmdout.loadXtra(getBytes().toString());
 			var hmd = hmdout.toHMD(null, !StringTools.startsWith(name, "Anim_"));
 			var out = new haxe.io.BytesOutput();
 			new hxd.fmt.hmd.Writer(out).write(hmd);
@@ -67,35 +57,6 @@ private class LocalEntry extends FileEntry {
 		if( ttime == null || ttime.mtime.getTime() < sys.FileSystem.stat(file).mtime.getTime() ) {
 			var hmd = getHMD();
 			sys.io.File.saveBytes(target, hmd);
-		}
-		#end
-	}
-
-	function convertToXBX() {
-		function getXBX() {
-			var fbx = null;
-			try fbx = hxd.fmt.fbx.Parser.parse(getBytes().toString()) catch( e : Dynamic ) throw Std.string(e) + " in " + relPath;
-			fbx = fs.xbxFilter(this, fbx);
-			var out = new haxe.io.BytesOutput();
-			new hxd.fmt.fbx.XBXWriter(out).write(fbx);
-			return out.getBytes();
-		}
-		var target = fs.tmpDir + "R_" + INVALID_CHARS.replace(relPath,"_") + ".xbx";
-		#if air3
-		var target = new flash.filesystem.File(target);
-		if( !target.exists || target.modificationDate.getTime() < file.modificationDate.getTime() ) {
-			var fbx = getXBX();
-			var out = new flash.filesystem.FileStream();
-			out.open(target, flash.filesystem.FileMode.WRITE);
-			out.writeBytes(fbx.getData());
-			out.close();
-		}
-		file = target;
-		#else
-		var ttime = try sys.FileSystem.stat(target) catch( e : Dynamic ) null;
-		if( ttime == null || ttime.mtime.getTime() < sys.FileSystem.stat(file).mtime.getTime() ) {
-			var fbx = getXBX();
-			sys.io.File.saveBytes(target, fbx);
 		}
 		#end
 	}
@@ -357,8 +318,7 @@ class LocalFileSystem implements FileSystem {
 	var fileCache = new Map<String,{r:flash.filesystem.File}>();
 	#end
 	public var baseDir(default,null) : String;
-	public var createXBX : Bool;
-	public var createHMD : Bool;
+	var createHMD : Bool = true;
 	public var createMP3 : Bool;
 	public var tmpDir : String;
 
@@ -381,10 +341,6 @@ class LocalFileSystem implements FileSystem {
 		root = new LocalEntry(this, "root", null, baseDir);
 		#end
 		tmpDir = baseDir + ".tmp/";
-	}
-
-	public dynamic function xbxFilter( entry : FileEntry, fbx : hxd.fmt.fbx.Data.FbxNode ) : hxd.fmt.fbx.Data.FbxNode {
-		return fbx;
 	}
 
 	public function getRoot() : FileEntry {
