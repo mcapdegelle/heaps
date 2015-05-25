@@ -7,6 +7,7 @@ typedef TiledMapData = {
 	var tileheight	: Int;
 	var layers		: Array<TiledMapLayer>;
 	var tilesets	: Array<TiledMapTileset>;
+	var backgroundcolor : Int;
 }
 
 typedef TiledMapTileset = {
@@ -36,11 +37,14 @@ typedef TiledMapLayer = {
 	var name	: String;
 	var opacity	: Float;
 	var objects	: Array<TiledMapObject>;
+	var properties  : Map<String,String>;
 }
 
 typedef TiledMapObject = {
 	var x : Int;
 	var y : Int;
+	var width : Int;
+	var height : Int;
 	var rotation : Float;
 	var id  : Int;
 	var gid : Int;
@@ -89,6 +93,7 @@ class TiledMap extends Resource {
 						opacity : 1.,
 						objects : objs,
 						data    : null,
+						properties : parseProperties(l),
 					});
 				}
 			}
@@ -99,6 +104,7 @@ class TiledMap extends Resource {
 			height     : Std.parseInt(x.att.height),
 			tilewidth  : Std.parseInt(x.att.tilewidth),
 			tileheight : Std.parseInt(x.att.tileheight),
+			backgroundcolor : x.has.backgroundcolor ? Std.parseInt("0x" + x.att.backgroundcolor.substr(1)) : 0,
 			tilesets   : tilesets,
 			layers     : layers,
 		};
@@ -163,6 +169,7 @@ class TiledMap extends Resource {
 			name : l.att.name,
 			opacity : l.has.opacity ? Std.parseFloat(l.att.opacity) : 1.,
 			objects : new Array<TiledMapObject>(),
+			properties : parseProperties(l),
 			data : data,
 		};
 	}
@@ -175,6 +182,8 @@ class TiledMap extends Resource {
 			type : o.has.type ? o.att.type : null, 
 			x : Std.parseInt(o.att.x), 
 			y : Std.parseInt(o.att.y),
+			width  : o.has.width  ? Std.parseInt(o.att.width)  : 0, 
+			height : o.has.height ? Std.parseInt(o.att.height) : 0,
 			rotation   : o.has.rotation ? Std.parseFloat(o.att.rotation) / 180.0 * Math.PI : 0.0,
 			polytype   : RECTANGLE,
 			polypoints : null,
