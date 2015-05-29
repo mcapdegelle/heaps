@@ -224,7 +224,8 @@ class MemoryManager {
 	@:allow(h3d.mat.Texture.dispose)
 	function deleteTexture( t : h3d.mat.Texture ) {
 		textures.remove(t);
-		driver.disposeTexture(t);
+		driver.disposeTexture(t.t);
+		t.t = null;
 		texMemory -= t.width * t.height * bpp(t);
 	}
 

@@ -20,13 +20,6 @@ class FileInput extends haxe.io.Input {
 		avail = fs.bytesAvailable;
 	}
 
-	override function close() {
-		if( fs != null ) {
-			fs.close();
-			fs = null;
-		}
-	}
-
 	public function seek( p : Int, pos : FileSeek ) {
 		switch( pos ) {
 		case SeekBegin:
