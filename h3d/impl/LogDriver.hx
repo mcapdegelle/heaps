@@ -291,7 +291,7 @@ class LogDriver extends Driver {
 		return d.allocVertexes(m);
 	}
 
-	override function disposeTexture( t : h3d.mat.Texture ) {
+	override function disposeTexture( t : Texture ) {
 		log('Dispose texture');
 		d.disposeTexture(t);
 	}
